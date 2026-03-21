@@ -1,0 +1,55 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: audit-service
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/audit_db}
+    username: ${SPRING_DATASOURCE_USERNAME:carestream}
+    password: ${SPRING_DATASOURCE_PASSWORD:carestream_secret}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: audit-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      enable-auto-commit: false
+    listener:
+      ack-mode: RECORD
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  metrics:
+    tags:
+      service: audit-service
+
+logging:
+  level:
+    com.carestream: DEBUG
+    org.apache.kafka: WARN
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+  kafka:
+    bootstrap-servers: kafka:29092
+  datasource:
+    url: jdbc:postgresql://postgres:5432/audit_db

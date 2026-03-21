@@ -15,8 +15,8 @@ streaming and an enterprise Security Operations layer.
 | Phase | Name | Status |
 |---|---|---|
 | 0 | Planning & System Design | ✅ Complete |
-| 1 | Core Backend Foundation | — |
-| 2 | Security Foundation | — |
+| 1 | Core Backend Foundation | ✅ Complete |
+| 2 | Security Foundation | ✅ Complete |
 | 3 | Event-Driven Excellence | — |
 | 4 | Vulnerability Management | — |
 | 5 | Threat Detection & Incident Response | — |
@@ -68,6 +68,45 @@ streaming and an enterprise Security Operations layer.
 EHR → API Gateway (JWT check) → Ingestion Service → Kafka → Patient Service + Audit Service
                                                          └──► Threat Detection → Incidents
 ```
+
+## Running Locally (Phase 1)
+
+```bash
+# 1. Start infrastructure (Kafka, PostgreSQL, Redis, Grafana)
+docker compose up -d zookeeper kafka postgres redis kafka-ui prometheus grafana
+
+# 2. Build and run each service (from backend/)
+cd backend
+mvn install -DskipTests
+
+# 3. Start services (in separate terminals)
+cd ingestion-service && mvn spring-boot:run
+cd patient-service   && mvn spring-boot:run
+cd audit-service     && mvn spring-boot:run
+
+# 4. Send a test event
+curl -X POST http://localhost:8082/api/v1/ingest/adt-event \
+  -H "Content-Type: application/json" \
+  -d '{
+    "eventType": "ADMISSION",
+    "patientId": "P-00001",
+    "source": "EHR_SYSTEM_A",
+    "payload": { "ward": "ICU-1", "attendingPhysicianId": "DOC-001" }
+  }'
+
+# 5. Verify patient in DB
+curl http://localhost:8083/api/v1/patients/P-00001
+
+# 6. Run full smoke test
+bash tools/simulate/smoke_test.sh
+
+# 7. Run high-volume simulation
+cd tools/simulate && pip install -r requirements.txt
+python patient_event_producer.py --count 5000 --delay-ms 10
+```
+
+**Kafka UI:** http://localhost:8090 — watch messages flowing in real time
+**Grafana:**  http://localhost:3000 (admin/admin)
 
 ## Quick Answer: Where Security is Enforced
 

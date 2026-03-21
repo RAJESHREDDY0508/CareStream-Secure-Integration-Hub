@@ -1,0 +1,95 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: ${AUTH_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/v1/auth/**
+
+        - id: ingestion-service
+          uri: ${INGESTION_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/api/v1/ingest/**
+          filters:
+            - AddRequestHeader=X-Gateway-Source, carestream-gateway
+
+        - id: patient-service
+          uri: ${PATIENT_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/v1/patients/**
+          filters:
+            - AddRequestHeader=X-Gateway-Source, carestream-gateway
+
+        - id: audit-service
+          uri: ${AUDIT_SERVICE_URL:http://localhost:8084}
+          predicates:
+            - Path=/api/v1/audit/**
+          filters:
+            - AddRequestHeader=X-Gateway-Source, carestream-gateway
+
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+            allowedHeaders: "*"
+            exposedHeaders: ["Authorization"]
+
+jwt:
+  # Must match the secret in auth-service
+  secret: ${JWT_SECRET:Y2FyZXN0cmVhbS1zZWN1cmUtaW50ZWdyYXRpb24taHViLXNlY3JldC1rZXktMjAyNg==}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  metrics:
+    tags:
+      service: api-gateway
+
+logging:
+  level:
+    com.carestream: DEBUG
+    org.springframework.cloud.gateway: INFO
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: http://auth-service:8081
+          predicates:
+            - Path=/api/v1/auth/**
+
+        - id: ingestion-service
+          uri: http://ingestion-service:8082
+          predicates:
+            - Path=/api/v1/ingest/**
+          filters:
+            - AddRequestHeader=X-Gateway-Source, carestream-gateway
+
+        - id: patient-service
+          uri: http://patient-service:8083
+          predicates:
+            - Path=/api/v1/patients/**
+          filters:
+            - AddRequestHeader=X-Gateway-Source, carestream-gateway
+
+        - id: audit-service
+          uri: http://audit-service:8084
+          predicates:
+            - Path=/api/v1/audit/**
+          filters:
+            - AddRequestHeader=X-Gateway-Source, carestream-gateway
