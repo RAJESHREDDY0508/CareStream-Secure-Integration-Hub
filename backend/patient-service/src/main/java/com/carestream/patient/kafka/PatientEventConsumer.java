@@ -7,10 +7,20 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.support.KafkaHeaders;
-import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.stereotype.Component;
 
+/**
+ * Phase 3 — Resilient patient event consumer.
+ *
+ * The DefaultErrorHandler (configured in KafkaConsumerConfig) handles:
+ *   - Transient failures:   exponential backoff (1s → 2s → 4s), max 3 retries
+ *   - Permanent failures:   route to dlq.patient.events after retries exhausted
+ *   - Non-retryable errors: direct DLQ (JSON parse errors, illegal args)
+ *
+ * Manual ACK is used so an unhandled exception causes the offset NOT to be committed
+ * until the error handler processes it (retry or DLQ routing).
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -19,33 +29,27 @@ public class PatientEventConsumer {
     private final PatientService patientService;
     private final ObjectMapper objectMapper;
 
-    /**
-     * Listens to all patient ADT topics.
-     * Messages are deserialized from JSON String → PatientEventMessage.
-     * Partition key = patientId ensures ordered processing per patient.
-     */
     @KafkaListener(
-        topics = {"patient.admission", "patient.discharge", "patient.transfer"},
-        groupId = "patient-service-group",
+        topics     = {"patient.admission", "patient.discharge", "patient.transfer"},
+        groupId    = "patient-service-group",
         concurrency = "3"
     )
     public void consume(ConsumerRecord<String, String> record) {
-        String topic     = record.topic();
-        int partition    = record.partition();
-        long offset      = record.offset();
-        String key       = record.key();
-        String value     = record.value();
+        log.debug("[CONSUMER] topic={} partition={} offset={} key={}",
+                record.topic(), record.partition(), record.offset(), record.key());
 
-        log.debug("[CONSUMER] Received topic={} partition={} offset={} key={}",
-                topic, partition, offset, key);
+        // Any exception thrown here is caught by DefaultErrorHandler,
+        // which applies exponential backoff and eventually routes to DLQ.
+        PatientEventMessage message = deserialize(record.value());
+        patientService.processEvent(message, record.partition(), record.offset());
+    }
 
+    private PatientEventMessage deserialize(String value) {
         try {
-            PatientEventMessage message = objectMapper.readValue(value, PatientEventMessage.class);
-            patientService.processEvent(message, partition, offset);
+            return objectMapper.readValue(value, PatientEventMessage.class);
         } catch (Exception e) {
-            log.error("[CONSUMER] Failed to process record topic={} offset={} error={}",
-                    topic, offset, e.getMessage(), e);
-            // Phase 3: route to DLQ here
+            // Non-retryable — will be routed directly to DLQ
+            throw new IllegalArgumentException("Failed to deserialize patient event: " + e.getMessage(), e);
         }
     }
 }

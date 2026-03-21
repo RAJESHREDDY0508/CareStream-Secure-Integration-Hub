@@ -9,6 +9,11 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
+/**
+ * Phase 3 — Resilient audit event consumer.
+ * DefaultErrorHandler (configured in KafkaConsumerConfig) applies exponential backoff
+ * and routes to dlq.patient.events after retries are exhausted.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -17,26 +22,25 @@ public class AuditEventConsumer {
     private final AuditService auditService;
     private final ObjectMapper objectMapper;
 
-    /**
-     * Listens to all patient ADT topics to build an immutable audit trail.
-     * Separate consumer group from patient-service — each gets all messages.
-     */
     @KafkaListener(
-        topics = {"patient.admission", "patient.discharge", "patient.transfer"},
-        groupId = "audit-service-group",
-        concurrency = "3"
+        topics      = {"patient.admission", "patient.discharge", "patient.transfer"},
+        groupId     = "audit-service-group",
+        concurrency = "3",
+        containerFactory = "auditKafkaListenerContainerFactory"
     )
     public void consume(ConsumerRecord<String, String> record) {
-        log.debug("[AUDIT-CONSUMER] topic={} partition={} offset={} key={}",
-                record.topic(), record.partition(), record.offset(), record.key());
+        log.debug("[AUDIT-CONSUMER] topic={} partition={} offset={}",
+                record.topic(), record.partition(), record.offset());
 
+        PatientEventMessage message = deserialize(record.value());
+        auditService.logPatientEvent(message);
+    }
+
+    private PatientEventMessage deserialize(String value) {
         try {
-            PatientEventMessage message = objectMapper.readValue(record.value(), PatientEventMessage.class);
-            auditService.logPatientEvent(message);
+            return objectMapper.readValue(value, PatientEventMessage.class);
         } catch (Exception e) {
-            log.error("[AUDIT-CONSUMER] Failed to process record topic={} offset={} error={}",
-                    record.topic(), record.offset(), e.getMessage(), e);
-            // Phase 3: route to DLQ
+            throw new IllegalArgumentException("Audit deserialization failed: " + e.getMessage(), e);
         }
     }
 }
