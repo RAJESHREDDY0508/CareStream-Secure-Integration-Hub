@@ -1,0 +1,944 @@
+openapi: 3.0.3
+info:
+  title: CareStream Secure Integration Hub API
+  description: |
+    HIPAA-grade distributed healthcare integration platform.
+    All endpoints require a valid JWT Bearer token unless marked as public.
+
+    **Roles:**
+    - `ADMIN` — full access
+    - `DOCTOR` — patient data + events
+    - `SERVICE` — inter-service calls only
+  version: 1.0.0
+  contact:
+    name: CareStream Engineering
+  license:
+    name: Private
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local (via API Gateway)
+  - url: https://carestream.example.com/api/v1
+    description: Production
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Auth
+    description: Authentication & token management
+  - name: Ingestion
+    description: ADT event ingestion
+  - name: Patients
+    description: Patient state management
+  - name: Audit
+    description: Audit log access
+  - name: Vulnerabilities
+    description: Vulnerability management
+  - name: Incidents
+    description: Incident response
+  - name: Simulation
+    description: Demo simulation endpoints
+
+paths:
+
+  # ─────────────────────────────────────────────────────────
+  # AUTH SERVICE
+  # ─────────────────────────────────────────────────────────
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login and obtain JWT
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              username: "dr.smith"
+              password: "SecurePass123!"
+      responses:
+        '200':
+          description: JWT issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: New access token issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Revoke token (blacklist JWT)
+      responses:
+        '204':
+          description: Token revoked
+
+  /auth/users:
+    get:
+      tags: [Auth]
+      summary: List users (ADMIN only)
+      security:
+        - BearerAuth: [ADMIN]
+      responses:
+        '200':
+          description: User list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserResponse'
+    post:
+      tags: [Auth]
+      summary: Create user (ADMIN only)
+      security:
+        - BearerAuth: [ADMIN]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+
+  # ─────────────────────────────────────────────────────────
+  # INGESTION SERVICE
+  # ─────────────────────────────────────────────────────────
+
+  /ingest/adt-event:
+    post:
+      tags: [Ingestion]
+      summary: Ingest an ADT patient event
+      description: |
+        Validates and publishes a patient ADT event to Kafka.
+        Requires DOCTOR or SERVICE role.
+        Partitioned by patientId.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ADTEventRequest'
+            examples:
+              admission:
+                summary: Patient Admission
+                value:
+                  eventType: ADMISSION
+                  patientId: "P-12345"
+                  source: "EHR_SYSTEM_A"
+                  payload:
+                    firstName: "John"
+                    lastName: "Doe"
+                    dateOfBirth: "1985-06-15"
+                    admissionDate: "2026-03-20T10:00:00Z"
+                    ward: "ICU-3"
+                    attendingPhysicianId: "DOC-001"
+                    diagnosisCode: "J18.9"
+      responses:
+        '202':
+          description: Event accepted and published to Kafka
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventAcceptedResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /ingest/health:
+    get:
+      tags: [Ingestion]
+      summary: Health check
+      security: []
+      responses:
+        '200':
+          description: Service healthy
+
+  # ─────────────────────────────────────────────────────────
+  # PATIENT SERVICE
+  # ─────────────────────────────────────────────────────────
+
+  /patients:
+    get:
+      tags: [Patients]
+      summary: List patients (paginated)
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ADMITTED, DISCHARGED, TRANSFERRED]
+        - name: ward
+          in: query
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Patient list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientPage'
+
+  /patients/{patientId}:
+    get:
+      tags: [Patients]
+      summary: Get patient by ID
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "P-12345"
+      responses:
+        '200':
+          description: Patient record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /patients/{patientId}/events:
+    get:
+      tags: [Patients]
+      summary: Get event history for a patient
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Event history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PatientEventResponse'
+
+  # ─────────────────────────────────────────────────────────
+  # AUDIT SERVICE
+  # ─────────────────────────────────────────────────────────
+
+  /audit/logs:
+    get:
+      tags: [Audit]
+      summary: Query audit logs (ADMIN only)
+      parameters:
+        - name: actorId
+          in: query
+          schema:
+            type: string
+        - name: action
+          in: query
+          schema:
+            type: string
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Audit log entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuditLogEntry'
+
+  # ─────────────────────────────────────────────────────────
+  # VULNERABILITY SERVICE
+  # ─────────────────────────────────────────────────────────
+
+  /vulnerabilities:
+    get:
+      tags: [Vulnerabilities]
+      summary: List vulnerabilities (ADMIN only)
+      parameters:
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [CRITICAL, HIGH, MEDIUM, LOW]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [OPEN, IN_PROGRESS, REMEDIATED, ACCEPTED, OVERDUE]
+        - name: service
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Vulnerability list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VulnerabilityResponse'
+
+  /vulnerabilities/{findingId}:
+    get:
+      tags: [Vulnerabilities]
+      summary: Get vulnerability detail
+      parameters:
+        - name: findingId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Vulnerability detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VulnerabilityResponse'
+
+  /vulnerabilities/{findingId}/assign:
+    patch:
+      tags: [Vulnerabilities]
+      summary: Assign vulnerability to owner
+      parameters:
+        - name: findingId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                assigneeId:
+                  type: string
+                ticketId:
+                  type: string
+      responses:
+        '200':
+          description: Updated
+
+  /vulnerabilities/{findingId}/remediate:
+    patch:
+      tags: [Vulnerabilities]
+      summary: Mark vulnerability as remediated
+      parameters:
+        - name: findingId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Marked remediated
+
+  /vulnerabilities/stats:
+    get:
+      tags: [Vulnerabilities]
+      summary: Vulnerability statistics (for dashboard)
+      responses:
+        '200':
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VulnerabilityStats'
+
+  # ─────────────────────────────────────────────────────────
+  # INCIDENT SERVICE
+  # ─────────────────────────────────────────────────────────
+
+  /incidents:
+    get:
+      tags: [Incidents]
+      summary: List incidents
+      parameters:
+        - name: severity
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Incident list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IncidentResponse'
+
+  /incidents/{incidentId}:
+    get:
+      tags: [Incidents]
+      summary: Get incident detail
+      parameters:
+        - name: incidentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Incident detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncidentResponse'
+
+  /incidents/{incidentId}/status:
+    patch:
+      tags: [Incidents]
+      summary: Update incident status
+      parameters:
+        - name: incidentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [INVESTIGATING, CONTAINED, RESOLVED, CLOSED]
+                note:
+                  type: string
+      responses:
+        '200':
+          description: Updated
+
+  /incidents/stats:
+    get:
+      tags: [Incidents]
+      summary: Incident statistics (MTTR, open count, etc.)
+      responses:
+        '200':
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncidentStats'
+
+  # ─────────────────────────────────────────────────────────
+  # SIMULATION (Demo endpoints — ADMIN only)
+  # ─────────────────────────────────────────────────────────
+
+  /simulate/patient-events:
+    post:
+      tags: [Simulation]
+      summary: Generate bulk patient events
+      description: |
+        Publishes N synthetic ADT events to Kafka.
+        Used for demos and load testing.
+        Requires ADMIN role.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatientEventSimRequest'
+            example:
+              count: 500
+              eventTypes: [ADMISSION, DISCHARGE, TRANSFER]
+              delayMs: 10
+      responses:
+        '202':
+          description: Simulation started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  simulationId:
+                    type: string
+                  eventCount:
+                    type: integer
+                  status:
+                    type: string
+
+  /simulate/vulnerabilities:
+    post:
+      tags: [Simulation]
+      summary: Generate mock vulnerability findings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VulnSimRequest'
+            example:
+              count: 50
+              severityDistribution:
+                CRITICAL: 5
+                HIGH: 15
+                MEDIUM: 20
+                LOW: 10
+      responses:
+        '202':
+          description: Vulnerabilities injected
+
+  /simulate/threat-attack:
+    post:
+      tags: [Simulation]
+      summary: Simulate a security attack scenario
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                attackType:
+                  type: string
+                  enum: [BRUTE_FORCE, ANOMALOUS_ACCESS, POLICY_VIOLATION, UNUSUAL_VOLUME]
+                targetUserId:
+                  type: string
+                  default: "random"
+      responses:
+        '202':
+          description: Attack simulation started — watch for incident creation
+
+  /simulate/replay:
+    post:
+      tags: [Simulation]
+      summary: Replay a recorded event stream
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                scenarioName:
+                  type: string
+                  enum: [MORNING_RUSH, MASS_ADMISSION, SECURITY_BREACH, FULL_DEMO]
+      responses:
+        '202':
+          description: Replay started
+
+# ─────────────────────────────────────────────────────────
+# COMPONENTS
+# ─────────────────────────────────────────────────────────
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 0
+    Size:
+      name: size
+      in: query
+      schema:
+        type: integer
+        default: 20
+        maximum: 100
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid JWT
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Insufficient role
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    BadRequest:
+      description: Validation failure
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+    TokenResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        expiresIn:
+          type: integer
+          description: Seconds until access token expires
+        tokenType:
+          type: string
+          example: Bearer
+        role:
+          type: string
+
+    CreateUserRequest:
+      type: object
+      required: [username, email, password, role]
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 12
+        role:
+          type: string
+          enum: [ADMIN, DOCTOR, SERVICE]
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        enabled:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    ADTEventRequest:
+      type: object
+      required: [eventType, patientId, source, payload]
+      properties:
+        eventType:
+          type: string
+          enum: [ADMISSION, DISCHARGE, TRANSFER, LAB_UPDATE]
+        patientId:
+          type: string
+          pattern: '^P-\d{5}$'
+          example: "P-12345"
+        source:
+          type: string
+        correlationId:
+          type: string
+          description: Optional — auto-generated if omitted
+        payload:
+          type: object
+          additionalProperties: true
+
+    EventAcceptedResponse:
+      type: object
+      properties:
+        eventId:
+          type: string
+        correlationId:
+          type: string
+        topic:
+          type: string
+        partition:
+          type: integer
+        offset:
+          type: integer
+        status:
+          type: string
+          example: ACCEPTED
+
+    PatientResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        patientId:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        currentStatus:
+          type: string
+        currentWard:
+          type: string
+        attendingPhysician:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+
+    PatientPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/PatientResponse'
+        totalElements:
+          type: integer
+        totalPages:
+          type: integer
+        page:
+          type: integer
+        size:
+          type: integer
+
+    PatientEventResponse:
+      type: object
+      properties:
+        eventId:
+          type: string
+        eventType:
+          type: string
+        payload:
+          type: object
+        processedAt:
+          type: string
+          format: date-time
+
+    AuditLogEntry:
+      type: object
+      properties:
+        auditId:
+          type: string
+        action:
+          type: string
+        actorId:
+          type: string
+        actorRole:
+          type: string
+        resource:
+          type: string
+        outcome:
+          type: string
+        ipAddress:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    VulnerabilityResponse:
+      type: object
+      properties:
+        findingId:
+          type: string
+        cveId:
+          type: string
+        severity:
+          type: string
+        affectedComponent:
+          type: string
+        affectedService:
+          type: string
+        cvssScore:
+          type: number
+        slaDeadline:
+          type: string
+          format: date-time
+        slaStatus:
+          type: string
+          enum: [ON_TRACK, AT_RISK, BREACHED]
+        status:
+          type: string
+        assigneeId:
+          type: string
+        ticketId:
+          type: string
+        detectedAt:
+          type: string
+          format: date-time
+
+    VulnerabilityStats:
+      type: object
+      properties:
+        total:
+          type: integer
+        bySeverity:
+          type: object
+          properties:
+            CRITICAL:
+              type: integer
+            HIGH:
+              type: integer
+            MEDIUM:
+              type: integer
+            LOW:
+              type: integer
+        byStatus:
+          type: object
+        slaCompliancePercent:
+          type: number
+        mttrDays:
+          type: number
+
+    IncidentResponse:
+      type: object
+      properties:
+        incidentId:
+          type: string
+        title:
+          type: string
+        severity:
+          type: string
+        status:
+          type: string
+        assignedTo:
+          type: string
+        openedAt:
+          type: string
+          format: date-time
+        resolvedAt:
+          type: string
+          format: date-time
+        mttrMinutes:
+          type: integer
+        timeline:
+          type: array
+          items:
+            type: object
+
+    IncidentStats:
+      type: object
+      properties:
+        totalOpen:
+          type: integer
+        totalResolved:
+          type: integer
+        avgMttrMinutes:
+          type: number
+        bySeverity:
+          type: object
+
+    PatientEventSimRequest:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 1
+          maximum: 100000
+          default: 500
+        eventTypes:
+          type: array
+          items:
+            type: string
+            enum: [ADMISSION, DISCHARGE, TRANSFER, LAB_UPDATE]
+        delayMs:
+          type: integer
+          description: Delay between events in milliseconds
+          default: 10
+
+    VulnSimRequest:
+      type: object
+      properties:
+        count:
+          type: integer
+          default: 50
+        severityDistribution:
+          type: object
+          properties:
+            CRITICAL:
+              type: integer
+            HIGH:
+              type: integer
+            MEDIUM:
+              type: integer
+            LOW:
+              type: integer
+
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
+        correlationId:
+          type: string
