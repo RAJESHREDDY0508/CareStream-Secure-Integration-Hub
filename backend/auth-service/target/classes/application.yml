@@ -1,0 +1,59 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: auth-service
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/auth_db}
+    username: ${SPRING_DATASOURCE_USERNAME:carestream}
+    password: ${SPRING_DATASOURCE_PASSWORD:carestream_secret}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: 6379
+
+jwt:
+  # 256-bit Base64-encoded secret — override via JWT_SECRET env variable in production
+  secret: ${JWT_SECRET:Y2FyZXN0cmVhbS1zZWN1cmUtaW50ZWdyYXRpb24taHViLXNlY3JldC1rZXktMjAyNg==}
+  expiration-ms: ${JWT_EXPIRATION_MS:900000}          # 15 minutes
+  refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}  # 7 days
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      service: auth-service
+
+logging:
+  level:
+    com.carestream: DEBUG
+    org.springframework.security: WARN
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+  datasource:
+    url: jdbc:postgresql://postgres:5432/auth_db
+  data:
+    redis:
+      host: redis

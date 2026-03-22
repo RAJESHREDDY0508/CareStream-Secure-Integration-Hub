@@ -15,40 +15,29 @@ services:
 
   # ─── Infrastructure ───────────────────────────────────────
 
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.6.0
-    container_name: carestream-zookeeper
-    networks: [carestream-net]
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "2181"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   kafka:
     image: confluentinc/cp-kafka:7.6.0
     container_name: carestream-kafka
     networks: [carestream-net]
-    depends_on:
-      zookeeper:
-        condition: service_healthy
     ports:
       - "9092:9092"
     volumes:
       - kafka-data:/var/lib/kafka/data
     environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      KAFKA_LISTENERS: PLAINTEXT://kafka:29092,CONTROLLER://kafka:29093,PLAINTEXT_HOST://0.0.0.0:9092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
       KAFKA_LOG_RETENTION_HOURS: 168
       KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
     healthcheck:
       test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
       interval: 15s
@@ -127,17 +116,21 @@ services:
       - grafana-data:/var/lib/grafana
       - ./docker/grafana/dashboards:/etc/grafana/provisioning/dashboards
       - ./docker/grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./docker/grafana/alerting:/etc/grafana/provisioning/alerting
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
       GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_UNIFIED_ALERTING_ENABLED: "true"
+      GF_ALERTING_ENABLED: "false"
+      GF_UNIFIED_ALERTING_EXECUTE_ALERTS: "true"
 
   # ─── Microservices (uncomment as each phase builds them) ──
 
   ingestion-service:
     build:
-      context: ./backend/ingestion-service
-      dockerfile: Dockerfile
+      context: ./backend
+      dockerfile: ingestion-service/Dockerfile
     container_name: carestream-ingestion
     networks: [carestream-net]
     depends_on:
@@ -151,15 +144,15 @@ services:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       SPRING_PROFILES_ACTIVE: docker
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/actuator/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
 
   patient-service:
     build:
-      context: ./backend/patient-service
-      dockerfile: Dockerfile
+      context: ./backend
+      dockerfile: patient-service/Dockerfile
     container_name: carestream-patient
     networks: [carestream-net]
     depends_on:
@@ -178,8 +171,8 @@ services:
 
   audit-service:
     build:
-      context: ./backend/audit-service
-      dockerfile: Dockerfile
+      context: ./backend
+      dockerfile: audit-service/Dockerfile
     container_name: carestream-audit
     networks: [carestream-net]
     depends_on:
@@ -198,8 +191,8 @@ services:
 
   auth-service:
     build:
-      context: ./backend/auth-service
-      dockerfile: Dockerfile
+      context: ./backend
+      dockerfile: auth-service/Dockerfile
     container_name: carestream-auth
     networks: [carestream-net]
     depends_on:
@@ -216,10 +209,60 @@ services:
       SPRING_DATA_REDIS_HOST: redis
       SPRING_PROFILES_ACTIVE: docker
 
+  vulnerability-service:
+    build:
+      context: ./backend
+      dockerfile: vulnerability-service/Dockerfile
+    container_name: carestream-vulnerability
+    networks: [carestream-net]
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/security_db
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-carestream}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-carestream_secret}
+      SPRING_PROFILES_ACTIVE: docker
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8085/api/v1/vulnerabilities/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  incident-service:
+    build:
+      context: ./backend
+      dockerfile: incident-service/Dockerfile
+    container_name: carestream-incident
+    networks: [carestream-net]
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8086:8086"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/security_db
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-carestream}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-carestream_secret}
+      SPRING_PROFILES_ACTIVE: docker
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8086/api/v1/incidents/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
   api-gateway:
     build:
-      context: ./backend/api-gateway
-      dockerfile: Dockerfile
+      context: ./backend
+      dockerfile: api-gateway/Dockerfile
     container_name: carestream-gateway
     networks: [carestream-net]
     depends_on:
@@ -227,7 +270,50 @@ services:
       - patient-service
       - audit-service
       - auth-service
+      - vulnerability-service
+      - incident-service
     ports:
       - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: docker
+
+  # ─── Real-Time Event Simulator ───────────────────────────────────────────
+
+  simulator-service:
+    build:
+      context: ./backend
+      dockerfile: simulator-service/Dockerfile
+    container_name: carestream-simulator
+    networks: [carestream-net]
+    depends_on:
+      kafka:
+        condition: service_healthy
+      vulnerability-service:
+        condition: service_healthy
+      incident-service:
+        condition: service_healthy
+    ports:
+      - "8089:8089"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SPRING_PROFILES_ACTIVE: docker
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8089/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ─── Frontend Dashboard ────────────────────────────────────────────────
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: carestream-frontend
+    networks: [carestream-net]
+    depends_on:
+      - api-gateway
+    ports:
+      - "3001:80"
+    restart: unless-stopped

@@ -3,6 +3,7 @@ package com.carestream.ingestion.exception;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -28,6 +29,14 @@ public class GlobalExceptionHandler {
                 "status", 400,
                 "error", "Validation Failed",
                 "details", errors
+        ));
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleAccessDenied(AccessDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                "timestamp", Instant.now().toString(),
+                "status", 403, "error", "Forbidden", "message", "Access denied: insufficient permissions"
         ));
     }
 

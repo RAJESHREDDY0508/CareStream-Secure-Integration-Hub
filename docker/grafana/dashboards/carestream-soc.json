@@ -1,0 +1,314 @@
+{
+  "__inputs": [],
+  "__requires": [
+    { "type": "grafana", "id": "grafana", "name": "Grafana", "version": "9.0.0" },
+    { "type": "datasource", "id": "prometheus", "name": "Prometheus", "version": "1.0.0" }
+  ],
+  "annotations": { "list": [] },
+  "description": "CareStream Secure Integration Hub — Security Operations Dashboard",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "title": "Vulnerability Management",
+      "type": "row"
+    },
+
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "orange", "value": 5 },
+            { "color": "red", "value": 20 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
+      "id": 1,
+      "options": { "colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+      "targets": [{ "datasource": "Prometheus", "expr": "carestream_vulnerabilities_open{service=\"vulnerability-service\"}", "legendFormat": "Open" }],
+      "title": "Open Vulnerabilities",
+      "type": "stat"
+    },
+
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "red", "value": 1 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 1 },
+      "id": 2,
+      "options": { "colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+      "targets": [{ "datasource": "Prometheus", "expr": "carestream_vulnerabilities_critical{service=\"vulnerability-service\"}", "legendFormat": "Critical" }],
+      "title": "Critical Vulnerabilities",
+      "type": "stat"
+    },
+
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "orange", "value": 1 },
+            { "color": "red", "value": 5 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 1 },
+      "id": 3,
+      "options": { "colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+      "targets": [{ "datasource": "Prometheus", "expr": "carestream_vulnerabilities_sla_breached{service=\"vulnerability-service\"}", "legendFormat": "SLA Breached" }],
+      "title": "SLA Breached",
+      "type": "stat"
+    },
+
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null },
+            { "color": "orange", "value": 80 },
+            { "color": "green", "value": 95 }
+          ]},
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        }
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 1 },
+      "id": 4,
+      "options": { "colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+      "targets": [{ "datasource": "Prometheus", "expr": "carestream_sla_compliance_percent{service=\"vulnerability-service\"}", "legendFormat": "SLA Compliance" }],
+      "title": "SLA Compliance %",
+      "type": "stat"
+    },
+
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" } } },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 1 },
+      "id": 5,
+      "options": { "displayLabels": ["percent"], "legend": { "displayMode": "table", "placement": "right" }, "pieType": "pie" },
+      "targets": [
+        { "datasource": "Prometheus", "expr": "carestream_findings_by_severity_total{severity=\"CRITICAL\"}", "legendFormat": "Critical" },
+        { "datasource": "Prometheus", "expr": "carestream_findings_by_severity_total{severity=\"HIGH\"}", "legendFormat": "High" },
+        { "datasource": "Prometheus", "expr": "carestream_findings_by_severity_total{severity=\"MEDIUM\"}", "legendFormat": "Medium" },
+        { "datasource": "Prometheus", "expr": "carestream_findings_by_severity_total{severity=\"LOW\"}", "legendFormat": "Low" }
+      ],
+      "title": "Findings by Severity",
+      "type": "piechart"
+    },
+
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "gridPos": { "h": 8, "w": 16, "x": 0, "y": 5 },
+      "id": 6,
+      "options": { "legend": { "calcs": ["last", "max"], "displayMode": "table", "placement": "right" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "datasource": "Prometheus", "expr": "rate(carestream_findings_ingested_total[5m]) * 60", "legendFormat": "Findings/min" },
+        { "datasource": "Prometheus", "expr": "rate(carestream_remediations_completed_total[5m]) * 60", "legendFormat": "Remediations/min" },
+        { "datasource": "Prometheus", "expr": "rate(carestream_sla_breach_alerts_total[5m]) * 60", "legendFormat": "SLA Breaches/min" }
+      ],
+      "title": "Vulnerability Activity Rate",
+      "type": "timeseries"
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 13 },
+      "id": 101,
+      "title": "Incident Response",
+      "type": "row"
+    },
+
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "orange", "value": 3 },
+            { "color": "red", "value": 10 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 14 },
+      "id": 10,
+      "options": { "colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+      "targets": [{ "datasource": "Prometheus", "expr": "carestream_incidents_open{service=\"incident-service\"}", "legendFormat": "Open" }],
+      "title": "Open Incidents",
+      "type": "stat"
+    },
+
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "red", "value": 1 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 14 },
+      "id": 11,
+      "options": { "colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+      "targets": [{ "datasource": "Prometheus", "expr": "carestream_incidents_critical_open{service=\"incident-service\"}", "legendFormat": "Critical Open" }],
+      "title": "Critical Open Incidents",
+      "type": "stat"
+    },
+
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "unit": "h",
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "orange", "value": 4 },
+            { "color": "red", "value": 24 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 14 },
+      "id": 12,
+      "options": { "colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+      "targets": [{ "datasource": "Prometheus", "expr": "carestream_incident_mttr_hours{service=\"incident-service\"}", "legendFormat": "MTTR" }],
+      "title": "Avg MTTR (hours)",
+      "type": "stat"
+    },
+
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 18 },
+      "id": 13,
+      "options": { "legend": { "calcs": ["last", "max"], "displayMode": "table", "placement": "right" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "datasource": "Prometheus", "expr": "rate(carestream_incidents_created_total[5m]) * 60", "legendFormat": "Incidents Created/min" },
+        { "datasource": "Prometheus", "expr": "rate(carestream_incidents_resolved_total[5m]) * 60", "legendFormat": "Incidents Resolved/min" },
+        { "datasource": "Prometheus", "expr": "rate(carestream_threat_events_received_total[5m]) * 60", "legendFormat": "Threat Events/min" }
+      ],
+      "title": "Incident Activity Rate",
+      "type": "timeseries"
+    },
+
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 18 },
+      "id": 14,
+      "options": { "legend": { "calcs": ["last"], "displayMode": "table", "placement": "right" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "datasource": "Prometheus", "expr": "carestream_alerts_sent_by_channel_total{channel=\"EMAIL\"}", "legendFormat": "Email" },
+        { "datasource": "Prometheus", "expr": "carestream_alerts_sent_by_channel_total{channel=\"SMS\"}", "legendFormat": "SMS" },
+        { "datasource": "Prometheus", "expr": "carestream_alerts_sent_by_channel_total{channel=\"PAGERDUTY\"}", "legendFormat": "PagerDuty" },
+        { "datasource": "Prometheus", "expr": "carestream_alerts_sent_by_channel_total{channel=\"SLACK\"}", "legendFormat": "Slack" }
+      ],
+      "title": "Alerts Sent by Channel",
+      "type": "timeseries"
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 26 },
+      "id": 102,
+      "title": "Service Health & JVM",
+      "type": "row"
+    },
+
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [
+            { "options": { "1": { "color": "green", "text": "UP" }, "0": { "color": "red", "text": "DOWN" } }, "type": "value" }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null },
+            { "color": "green", "value": 1 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 4, "w": 24, "x": 0, "y": 27 },
+      "id": 20,
+      "options": { "colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "horizontal", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+      "targets": [
+        { "datasource": "Prometheus", "expr": "up{job=\"vulnerability-service\"}", "legendFormat": "vulnerability-service" },
+        { "datasource": "Prometheus", "expr": "up{job=\"incident-service\"}", "legendFormat": "incident-service" },
+        { "datasource": "Prometheus", "expr": "up{job=\"auth-service\"}", "legendFormat": "auth-service" },
+        { "datasource": "Prometheus", "expr": "up{job=\"api-gateway\"}", "legendFormat": "api-gateway" },
+        { "datasource": "Prometheus", "expr": "up{job=\"ingestion-service\"}", "legendFormat": "ingestion-service" },
+        { "datasource": "Prometheus", "expr": "up{job=\"patient-service\"}", "legendFormat": "patient-service" },
+        { "datasource": "Prometheus", "expr": "up{job=\"audit-service\"}", "legendFormat": "audit-service" }
+      ],
+      "title": "Service Availability",
+      "type": "stat"
+    },
+
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "unit": "bytes", "color": { "mode": "palette-classic" } } },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 31 },
+      "id": 21,
+      "options": { "legend": { "calcs": ["last", "max"], "displayMode": "table", "placement": "right" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "datasource": "Prometheus", "expr": "jvm_memory_used_bytes{area=\"heap\",job=\"vulnerability-service\"}", "legendFormat": "vuln-svc heap" },
+        { "datasource": "Prometheus", "expr": "jvm_memory_used_bytes{area=\"heap\",job=\"incident-service\"}", "legendFormat": "incident-svc heap" }
+      ],
+      "title": "JVM Heap Usage",
+      "type": "timeseries"
+    },
+
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "unit": "s", "color": { "mode": "palette-classic" } } },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 31 },
+      "id": 22,
+      "options": { "legend": { "calcs": ["mean", "p95"], "displayMode": "table", "placement": "right" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "datasource": "Prometheus", "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job=\"vulnerability-service\"}[5m])) by (le))", "legendFormat": "vuln-svc p95" },
+        { "datasource": "Prometheus", "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job=\"incident-service\"}[5m])) by (le))", "legendFormat": "incident-svc p95" }
+      ],
+      "title": "HTTP Response Time p95",
+      "type": "timeseries"
+    }
+
+  ],
+  "refresh": "30s",
+  "schemaVersion": 37,
+  "style": "dark",
+  "tags": ["carestream", "security", "soc"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "CareStream SOC Dashboard",
+  "uid": "carestream-soc-v1",
+  "version": 1
+}

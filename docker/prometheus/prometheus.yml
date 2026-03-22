@@ -27,3 +27,26 @@ scrape_configs:
     metrics_path: '/actuator/prometheus'
     static_configs:
       - targets: ['api-gateway:8080']
+
+  - job_name: 'vulnerability-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['vulnerability-service:8085']
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'carestream_.*'
+        action: keep
+
+  - job_name: 'incident-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['incident-service:8086']
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'carestream_.*'
+        action: keep
+
+  - job_name: 'simulator-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['simulator-service:8089']

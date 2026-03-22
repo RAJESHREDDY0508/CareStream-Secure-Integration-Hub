@@ -1,0 +1,223 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: CareStream SOC Alerts
+    folder: CareStream
+    interval: 1m
+    rules:
+
+      # ── CRITICAL: Any critical vulnerability open ────────────────────────
+      - uid: csm-critical-vuln
+        title: "CRITICAL Vulnerabilities Detected"
+        condition: threshold
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: carestream_vulnerabilities_critical{service="vulnerability-service"}
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: threshold
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [0]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    type: last
+              expression: A
+              refId: threshold
+              type: threshold
+        noDataState: OK
+        execErrState: Error
+        for: 1m
+        labels:
+          severity: critical
+          team: soc
+        annotations:
+          summary: "CareStream: {{ $values.A }} CRITICAL vulnerabilities open"
+          description: >
+            One or more CRITICAL severity vulnerabilities are currently open in
+            CareStream. Immediate remediation required per NIST SP 800-40 SLA (24h).
+
+      # ── HIGH: SLA compliance below 90% ──────────────────────────────────
+      - uid: csm-sla-low
+        title: "SLA Compliance Below 90%"
+        condition: threshold
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: carestream_sla_compliance_percent{service="vulnerability-service"}
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: threshold
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [90]
+                    type: lt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    type: last
+              expression: A
+              refId: threshold
+              type: threshold
+        noDataState: OK
+        execErrState: Error
+        for: 2m
+        labels:
+          severity: high
+          team: soc
+        annotations:
+          summary: "CareStream SLA compliance dropped to {{ $values.A }}%"
+          description: >
+            Vulnerability SLA compliance has fallen below 90%.
+            Multiple findings are overdue — review and remediate immediately.
+
+      # ── HIGH: SLA breaches accumulating ─────────────────────────────────
+      - uid: csm-sla-breach
+        title: "SLA Breach Alerts Fired"
+        condition: threshold
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: increase(carestream_sla_breach_alerts_total{service="vulnerability-service"}[5m])
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: threshold
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [0]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    type: last
+              expression: A
+              refId: threshold
+              type: threshold
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        labels:
+          severity: high
+          team: soc
+        annotations:
+          summary: "{{ $values.A }} SLA breach(es) in the last 5 minutes"
+          description: >
+            One or more vulnerabilities have just breached their SLA deadline.
+            Check the Vulnerabilities page — filter by status OVERDUE.
+
+      # ── MEDIUM: High volume of new findings ──────────────────────────────
+      - uid: csm-finding-spike
+        title: "Vulnerability Ingestion Spike"
+        condition: threshold
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: increase(carestream_findings_ingested_total{service="vulnerability-service"}[5m])
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: threshold
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [20]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    type: last
+              expression: A
+              refId: threshold
+              type: threshold
+        noDataState: OK
+        execErrState: Error
+        for: 1m
+        labels:
+          severity: medium
+          team: soc
+        annotations:
+          summary: "{{ $values.A }} new findings ingested in 5 minutes — possible scan spike"
+          description: >
+            Unusually high rate of vulnerability findings. Verify scanner configuration
+            and check for false-positive-heavy scan profiles.
+
+      # ── CRITICAL: Open vulnerabilities exceed 50 ─────────────────────────
+      - uid: csm-vuln-backlog
+        title: "Vulnerability Backlog Critical"
+        condition: threshold
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: carestream_vulnerabilities_open{service="vulnerability-service"}
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: threshold
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [50]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    type: last
+              expression: A
+              refId: threshold
+              type: threshold
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        labels:
+          severity: critical
+          team: soc
+        annotations:
+          summary: "{{ $values.A }} open vulnerabilities — backlog exceeds threshold"
+          description: >
+            More than 50 open vulnerabilities are unaddressed. Review the remediation
+            queue and assign findings to the security engineering team.

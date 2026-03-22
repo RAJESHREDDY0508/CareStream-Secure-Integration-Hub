@@ -18,10 +18,10 @@ streaming and an enterprise Security Operations layer.
 | 1 | Core Backend Foundation | ✅ Complete |
 | 2 | Security Foundation | ✅ Complete |
 | 3 | Event-Driven Excellence | ✅ Complete |
-| 4 | Vulnerability Management | — |
-| 5 | Threat Detection & Incident Response | — |
-| 6 | Observability & Metrics | — |
-| 7 | Frontend Dashboard | — |
+| 4 | Vulnerability Management | ✅ Complete |
+| 5 | Threat Detection & Incident Response | ✅ Complete |
+| 6 | Observability & Metrics | ✅ Complete |
+| 7 | Frontend Dashboard | ✅ Complete |
 | 8 | Deployment & DevOps | — |
 
 ## Tech Stack

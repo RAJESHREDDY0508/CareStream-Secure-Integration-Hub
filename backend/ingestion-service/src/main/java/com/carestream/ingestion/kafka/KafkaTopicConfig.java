@@ -78,4 +78,16 @@ public class KafkaTopicConfig {
     @Bean public NewTopic vulnerabilityFindingsTopic() {
         return TopicBuilder.name("vulnerability.findings").partitions(3).replicas(1).build();
     }
+
+    // ─── Simulator input topic ────────────────────────────────────────────────
+    // Published by simulator-service, consumed by vulnerability-service to
+    // create findings in PostgreSQL and trigger the downstream Kafka chain.
+
+    @Bean public NewTopic vulnerabilityScanResultsTopic() {
+        return TopicBuilder.name("vulnerability.scan.results").partitions(3).replicas(1).build();
+    }
+
+    @Bean public NewTopic incidentEventsTopic() {
+        return TopicBuilder.name("incident.events").partitions(3).replicas(1).build();
+    }
 }

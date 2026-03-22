@@ -1,0 +1,210 @@
+<svg width="980" height="760" viewBox="0 0 980 760" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI', Arial, sans-serif">
+  <defs>
+    <marker id="a"  markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><polygon points="0 0,9 3.5,0 7" fill="#2563EB"/></marker>
+    <marker id="ag" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><polygon points="0 0,9 3.5,0 7" fill="#16A34A"/></marker>
+    <marker id="ao" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><polygon points="0 0,9 3.5,0 7" fill="#EA580C"/></marker>
+    <marker id="ai" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><polygon points="0 0,9 3.5,0 7" fill="#4338CA"/></marker>
+    <filter id="sh"><feDropShadow dx="1" dy="2" stdDeviation="2.5" flood-color="#00000018"/></filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="980" height="760" fill="#F8FAFC"/>
+
+  <!-- ─── TITLE ─── -->
+  <rect x="0" y="0" width="980" height="55" fill="#1E3A5F" rx="0"/>
+  <text x="490" y="30" text-anchor="middle" font-size="18" font-weight="700" fill="white">CareStream Secure Integration Hub</text>
+  <text x="490" y="48" text-anchor="middle" font-size="11" fill="#93C5FD">Event-Driven Healthcare Security Platform  ·  Spring Boot 3  ·  Apache Kafka  ·  React 18</text>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- ROW 1 — CLIENTS  +  SIMULATOR              -->
+  <!-- ─────────────────────────────────────────── -->
+  <!-- Clients group -->
+  <rect x="25"  y="70" width="510" height="95" rx="12" fill="#DBEAFE" stroke="#3B82F6" stroke-width="1.5"/>
+  <text x="40" y="88" font-size="10" font-weight="700" fill="#1E40AF" letter-spacing="0.8">CLIENTS</text>
+
+  <rect x="38"  y="93" width="148" height="60" rx="8" fill="white" stroke="#60A5FA" stroke-width="1.5" filter="url(#sh)"/>
+  <text x="112" y="117" text-anchor="middle" font-size="12" font-weight="700" fill="#1D4ED8">EHR / HL7</text>
+  <text x="112" y="133" text-anchor="middle" font-size="10" fill="#64748B">ADT Events  HTTPS</text>
+
+  <rect x="200" y="93" width="148" height="60" rx="8" fill="white" stroke="#60A5FA" stroke-width="1.5" filter="url(#sh)"/>
+  <text x="274" y="117" text-anchor="middle" font-size="12" font-weight="700" fill="#1D4ED8">React Dashboard</text>
+  <text x="274" y="133" text-anchor="middle" font-size="10" fill="#64748B">:3001  SOC Console</text>
+
+  <rect x="362" y="93" width="148" height="60" rx="8" fill="white" stroke="#60A5FA" stroke-width="1.5" filter="url(#sh)"/>
+  <text x="436" y="117" text-anchor="middle" font-size="12" font-weight="700" fill="#1D4ED8">Admin CLI</text>
+  <text x="436" y="133" text-anchor="middle" font-size="10" fill="#64748B">REST  /  JWT</text>
+
+  <!-- Simulator -->
+  <rect x="555" y="70" width="400" height="95" rx="12" fill="#E0E7FF" stroke="#6366F1" stroke-width="2"/>
+  <text x="570" y="88" font-size="10" font-weight="700" fill="#3730A3" letter-spacing="0.8">AUTO SIMULATOR  (always running)</text>
+  <rect x="568" y="93" width="374" height="60" rx="8" fill="white" stroke="#6366F1" stroke-width="1.5" filter="url(#sh)"/>
+  <text x="755" y="115" text-anchor="middle" font-size="13" font-weight="700" fill="#3730A3">Simulator Service  :8089</text>
+  <text x="755" y="132" text-anchor="middle" font-size="10" fill="#64748B">Patient events every 20s  ·  Vuln scans every 30s  ·  Alerts every 45s</text>
+  <text x="755" y="147" text-anchor="middle" font-size="10" fill="#94A3B8">CRITICAL 7%  ·  HIGH 13%  ·  MEDIUM 50%  ·  LOW 30%</text>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- ROW 2 — API GATEWAY  +  AUTH               -->
+  <!-- ─────────────────────────────────────────── -->
+  <!-- Gateway -->
+  <rect x="25"  y="188" width="415" height="85" rx="10" fill="white" stroke="#A855F7" stroke-width="2" filter="url(#sh)"/>
+  <text x="232" y="213" text-anchor="middle" font-size="14" font-weight="700" fill="#7E22CE">API Gateway  :8080</text>
+  <text x="232" y="231" text-anchor="middle" font-size="11" fill="#64748B">Spring Cloud Gateway</text>
+  <text x="232" y="248" text-anchor="middle" font-size="10" fill="#94A3B8">JWT Validation  ·  Rate Limiting  ·  Routing  ·  TLS</text>
+
+  <!-- Auth + Redis (grouped) -->
+  <rect x="460" y="188" width="495" height="85" rx="10" fill="#FEF2F2" stroke="#EF4444" stroke-width="1.5" filter="url(#sh)"/>
+  <text x="707" y="210" text-anchor="middle" font-size="11" font-weight="700" fill="#991B1B" letter-spacing="0.5">AUTHENTICATION</text>
+  <rect x="472" y="218" width="218" height="45" rx="7" fill="white" stroke="#F87171" stroke-width="1" filter="url(#sh)"/>
+  <text x="581" y="238" text-anchor="middle" font-size="12" font-weight="700" fill="#B91C1C">Auth Service  :8081</text>
+  <text x="581" y="254" text-anchor="middle" font-size="10" fill="#64748B">JWT · RBAC · Token Issuance</text>
+  <rect x="704" y="218" width="238" height="45" rx="7" fill="white" stroke="#F87171" stroke-width="1" filter="url(#sh)"/>
+  <text x="823" y="238" text-anchor="middle" font-size="12" font-weight="700" fill="#B91C1C">Redis  :6379</text>
+  <text x="823" y="254" text-anchor="middle" font-size="10" fill="#64748B">Token Cache  ·  Rate Counters</text>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- ROW 3 — APPLICATION SERVICES               -->
+  <!-- ─────────────────────────────────────────── -->
+  <rect x="25" y="296" width="930" height="105" rx="12" fill="#F0FDF4" stroke="#22C55E" stroke-width="1.5"/>
+  <text x="40" y="314" font-size="10" font-weight="700" fill="#15803D" letter-spacing="0.8">APPLICATION SERVICES</text>
+
+  <!-- Ingestion -->
+  <rect x="38"  y="320" width="168" height="68" rx="8" fill="white" stroke="#4ADE80" stroke-width="1.5" filter="url(#sh)"/>
+  <text x="122" y="342" text-anchor="middle" font-size="11" font-weight="700" fill="#15803D">Ingestion Service</text>
+  <text x="122" y="357" text-anchor="middle" font-size="10" fill="#64748B">:8082</text>
+  <text x="122" y="373" text-anchor="middle" font-size="9"  fill="#94A3B8">ADT Intake · Kafka Producer</text>
+
+  <!-- Patient -->
+  <rect x="222" y="320" width="168" height="68" rx="8" fill="white" stroke="#4ADE80" stroke-width="1.5" filter="url(#sh)"/>
+  <text x="306" y="342" text-anchor="middle" font-size="11" font-weight="700" fill="#15803D">Patient Service</text>
+  <text x="306" y="357" text-anchor="middle" font-size="10" fill="#64748B">:8083</text>
+  <text x="306" y="373" text-anchor="middle" font-size="9"  fill="#94A3B8">State Manager · Consumer</text>
+
+  <!-- Audit -->
+  <rect x="406" y="320" width="168" height="68" rx="8" fill="white" stroke="#4ADE80" stroke-width="1.5" filter="url(#sh)"/>
+  <text x="490" y="342" text-anchor="middle" font-size="11" font-weight="700" fill="#15803D">Audit Service</text>
+  <text x="490" y="357" text-anchor="middle" font-size="10" fill="#64748B">:8084</text>
+  <text x="490" y="373" text-anchor="middle" font-size="9"  fill="#94A3B8">Immutable Log · HIPAA Trail</text>
+
+  <!-- Vulnerability -->
+  <rect x="590" y="320" width="168" height="68" rx="8" fill="white" stroke="#4ADE80" stroke-width="1.5" filter="url(#sh)"/>
+  <text x="674" y="340" text-anchor="middle" font-size="11" font-weight="700" fill="#15803D">Vulnerability</text>
+  <text x="674" y="355" text-anchor="middle" font-size="11" font-weight="700" fill="#15803D">Service  :8085</text>
+  <text x="674" y="371" text-anchor="middle" font-size="9"  fill="#94A3B8">SLA Engine · CVE Mgmt</text>
+
+  <!-- Incident -->
+  <rect x="774" y="320" width="168" height="68" rx="8" fill="white" stroke="#4ADE80" stroke-width="1.5" filter="url(#sh)"/>
+  <text x="858" y="342" text-anchor="middle" font-size="11" font-weight="700" fill="#15803D">Incident Service</text>
+  <text x="858" y="357" text-anchor="middle" font-size="10" fill="#64748B">:8086</text>
+  <text x="858" y="373" text-anchor="middle" font-size="9"  fill="#94A3B8">Response · MTTR Tracking</text>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- ROW 4 — KAFKA                              -->
+  <!-- ─────────────────────────────────────────── -->
+  <rect x="25" y="424" width="930" height="105" rx="12" fill="#FFFBEB" stroke="#F59E0B" stroke-width="2.5"/>
+  <text x="490" y="446" text-anchor="middle" font-size="13" font-weight="700" fill="#B45309" letter-spacing="0.5">⚡  Apache Kafka  :9092  ·  KRaft Mode  ·  13 Topics</text>
+
+  <!-- Topic pills - simple, grouped -->
+  <rect x="44"  y="454" width="188" height="34" rx="17" fill="#FDE68A" stroke="#F59E0B" stroke-width="1.5"/>
+  <text x="138" y="476" text-anchor="middle" font-size="11" font-weight="700" fill="#92400E">patient.admission/discharge/transfer</text>
+
+  <rect x="245" y="454" width="185" height="34" rx="17" fill="#FED7AA" stroke="#F97316" stroke-width="1.5"/>
+  <text x="337" y="472" text-anchor="middle" font-size="11" font-weight="700" fill="#9A3412">vulnerability.scan.results</text>
+  <text x="337" y="484" text-anchor="middle" font-size="10" fill="#9A3412">vulnerability.findings</text>
+
+  <rect x="443" y="454" width="148" height="34" rx="17" fill="#FED7AA" stroke="#F97316" stroke-width="1.5"/>
+  <text x="517" y="476" text-anchor="middle" font-size="11" font-weight="700" fill="#9A3412">security.alerts</text>
+
+  <rect x="604" y="454" width="135" height="34" rx="17" fill="#FDE68A" stroke="#F59E0B" stroke-width="1.5"/>
+  <text x="671" y="476" text-anchor="middle" font-size="11" font-weight="700" fill="#92400E">audit.events</text>
+
+  <rect x="752" y="454" width="148" height="34" rx="17" fill="#FDE68A" stroke="#F59E0B" stroke-width="1.5"/>
+  <text x="826" y="476" text-anchor="middle" font-size="11" font-weight="700" fill="#92400E">incident.events</text>
+
+  <rect x="44"  y="496" width="130" height="24" rx="12" fill="#FEE2E2" stroke="#FCA5A5" stroke-width="1"/>
+  <text x="109" y="512" text-anchor="middle" font-size="10" fill="#991B1B">dlq.patient.events</text>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- ROW 5 — STORAGE  +  OBSERVABILITY          -->
+  <!-- ─────────────────────────────────────────── -->
+  <!-- PostgreSQL -->
+  <rect x="25" y="552" width="430" height="80" rx="10" fill="white" stroke="#0D9488" stroke-width="2" filter="url(#sh)"/>
+  <text x="240" y="576" text-anchor="middle" font-size="14" font-weight="700" fill="#0F766E">PostgreSQL  :5432</text>
+  <text x="240" y="595" text-anchor="middle" font-size="11" fill="#64748B">auth_db  ·  patient_db  ·  audit_db  ·  security_db</text>
+  <text x="240" y="613" text-anchor="middle" font-size="10" fill="#94A3B8">HIPAA-compliant  ·  Encrypted PII  ·  7-year retention</text>
+
+  <!-- Observability -->
+  <rect x="475" y="552" width="480" height="80" rx="10" fill="white" stroke="#8B5CF6" stroke-width="2" filter="url(#sh)"/>
+  <text x="715" y="573" text-anchor="middle" font-size="11" font-weight="700" fill="#6D28D9" letter-spacing="0.5">OBSERVABILITY</text>
+  <rect x="488" y="582" width="138" height="38" rx="6" fill="#FFF7ED" stroke="#FB923C" stroke-width="1" filter="url(#sh)"/>
+  <text x="557" y="598" text-anchor="middle" font-size="11" font-weight="700" fill="#C2410C">Prometheus</text>
+  <text x="557" y="612" text-anchor="middle" font-size="9"  fill="#64748B">:9090  metrics</text>
+  <rect x="636" y="582" width="138" height="38" rx="6" fill="#FFF7ED" stroke="#FB923C" stroke-width="1" filter="url(#sh)"/>
+  <text x="705" y="598" text-anchor="middle" font-size="11" font-weight="700" fill="#C2410C">Grafana</text>
+  <text x="705" y="612" text-anchor="middle" font-size="9"  fill="#64748B">:3000  dashboard</text>
+  <rect x="784" y="582" width="158" height="38" rx="6" fill="#EFF6FF" stroke="#60A5FA" stroke-width="1" filter="url(#sh)"/>
+  <text x="863" y="598" text-anchor="middle" font-size="11" font-weight="700" fill="#1D4ED8">Kafka UI</text>
+  <text x="863" y="612" text-anchor="middle" font-size="9"  fill="#64748B">:8090  topics</text>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- LEGEND                                      -->
+  <!-- ─────────────────────────────────────────── -->
+  <rect x="25" y="650" width="930" height="92" rx="10" fill="white" stroke="#E2E8F0" stroke-width="1.5"/>
+  <text x="45" y="670" font-size="10" font-weight="700" fill="#64748B" letter-spacing="0.8">DATA FLOW</text>
+
+  <!-- Arrow samples -->
+  <line x1="45"  y1="690" x2="115" y2="690" stroke="#2563EB" stroke-width="2.5" marker-end="url(#a)"/>
+  <text x="122" y="694" font-size="11" fill="#475569">HTTPS / REST</text>
+
+  <line x1="280" y1="690" x2="350" y2="690" stroke="#16A34A" stroke-width="2.5" marker-end="url(#ag)"/>
+  <text x="357" y="694" font-size="11" fill="#475569">Kafka Produce</text>
+
+  <line x1="520" y1="690" x2="590" y2="690" stroke="#EA580C" stroke-width="2.5" stroke-dasharray="7,4" marker-end="url(#ao)"/>
+  <text x="597" y="694" font-size="11" fill="#475569">Kafka Consume</text>
+
+  <line x1="760" y1="690" x2="830" y2="690" stroke="#4338CA" stroke-width="2.5" marker-end="url(#ai)"/>
+  <text x="837" y="694" font-size="11" fill="#475569">Simulator → Kafka</text>
+
+  <!-- Port reference row -->
+  <text x="45"  y="727" font-size="10" fill="#94A3B8">Ports: Gateway :8080  ·  Auth :8081  ·  Ingestion :8082  ·  Patient :8083  ·  Audit :8084  ·  Vuln :8085  ·  Incident :8086  ·  Simulator :8089  ·  Kafka UI :8090  ·  Prometheus :9090  ·  Grafana :3000  ·  Frontend :3001</text>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- ARROWS                                      -->
+  <!-- ─────────────────────────────────────────── -->
+
+  <!-- Clients → Gateway (center of clients to center of gateway) -->
+  <line x1="280" y1="165" x2="232" y2="188" stroke="#2563EB" stroke-width="2.5" marker-end="url(#a)"/>
+
+  <!-- Gateway ↔ Auth (horizontal) -->
+  <line x1="440" y1="230" x2="460" y2="230" stroke="#2563EB" stroke-width="2" marker-end="url(#a)"/>
+  <text x="450" y="225" text-anchor="middle" font-size="9" fill="#7C3AED">JWT</text>
+
+  <!-- Gateway → Services (vertical down through row3) -->
+  <line x1="232" y1="273" x2="232" y2="296" stroke="#2563EB" stroke-width="2" marker-end="url(#a)"/>
+  <text x="210" y="287" font-size="9" fill="#2563EB">routes</text>
+
+  <!-- Simulator → Kafka (diagonal from sim bottom to kafka center-right) -->
+  <line x1="755" y1="165" x2="755" y2="424" stroke="#4338CA" stroke-width="2.5" stroke-dasharray="none" marker-end="url(#ai)"/>
+
+  <!-- Ingestion → Kafka (produce, green) -->
+  <line x1="122" y1="388" x2="122" y2="424" stroke="#16A34A" stroke-width="2.5" marker-end="url(#ag)"/>
+  <text x="88" y="408" font-size="9" fill="#16A34A" font-weight="600">produce</text>
+
+  <!-- Kafka → Services (consume, orange dashed, going UP) -->
+  <!-- Kafka → Patient -->
+  <line x1="306" y1="424" x2="306" y2="388" stroke="#EA580C" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#ao)"/>
+  <!-- Kafka → Audit -->
+  <line x1="490" y1="424" x2="490" y2="388" stroke="#EA580C" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#ao)"/>
+  <!-- Kafka → Vulnerability -->
+  <line x1="674" y1="424" x2="674" y2="388" stroke="#EA580C" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#ao)"/>
+  <!-- Kafka → Incident -->
+  <line x1="858" y1="424" x2="858" y2="388" stroke="#EA580C" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#ao)"/>
+  <!-- consume label -->
+  <text x="870" y="408" font-size="9" fill="#EA580C" font-weight="600">consume</text>
+
+  <!-- Services → PostgreSQL (vertical down) -->
+  <line x1="490" y1="401" x2="240" y2="552" stroke="#0D9488" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#ag)"/>
+
+  <!-- Prometheus → Grafana -->
+  <line x1="626" y1="601" x2="636" y2="601" stroke="#EA580C" stroke-width="2" marker-end="url(#ao)"/>
+
+</svg>

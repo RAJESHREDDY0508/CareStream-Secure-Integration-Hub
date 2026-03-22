@@ -37,6 +37,18 @@ public class KafkaConsumerConfig {
         return new KafkaTemplate<>(new DefaultKafkaProducerFactory<>(props));
     }
 
+    @Bean(name = "auditEventsKafkaTemplate")
+    public KafkaTemplate<String, String> auditEventsKafkaTemplate() {
+        Map<String, Object> props = Map.of(
+                ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,       bootstrapServers,
+                ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,    StringSerializer.class,
+                ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,  StringSerializer.class,
+                ProducerConfig.ACKS_CONFIG, "all",
+                ProducerConfig.RETRIES_CONFIG, 3
+        );
+        return new KafkaTemplate<>(new DefaultKafkaProducerFactory<>(props));
+    }
+
     @Bean
     public DeadLetterPublishingRecoverer auditDeadLetterRecoverer(
             KafkaTemplate<String, String> auditDlqKafkaTemplate) {
